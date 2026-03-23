@@ -655,6 +655,10 @@ export default class Edit{
 			this.lastAction = "typing";
 		}
 		
+		if(this.params.multiselect) {
+			this.initialValues = null;
+		}
+		
 		this.data = data;
 		
 		return data;    
@@ -678,7 +682,15 @@ export default class Edit{
 				original:option,
 			};
 			
-			if(this.initialValues && this.initialValues.indexOf(option.value) > -1){
+			if(this.params.multiselect){
+				var existingIndex = this.currentItems.findIndex(existing => existing.value === option.value);
+				if(existingIndex > -1){
+					this.currentItems[existingIndex] = item;
+					item.selected = true;
+				}else if(this.initialValues && this.initialValues.indexOf(option.value) > -1){
+					this._chooseItem(item, true);
+				}
+			}else if(this.initialValues && this.initialValues.indexOf(option.value) > -1){
 				this._chooseItem(item, true);
 			}
 		}
