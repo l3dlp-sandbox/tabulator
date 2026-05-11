@@ -1058,6 +1058,8 @@ export default class Edit{
 			}else{
 				if(this.currentItems[0]){
 					output = this.currentItems[0].value;
+				}else if(this.isFilter && this.focusedItem && this.focusedItem.selected){
+					output = this.focusedItem.value;
 				}else{
 					initialValue = Array.isArray(this.initialValues) ? this.initialValues[0] : this.initialValues;
 					
