@@ -95,8 +95,8 @@ export default class ResizeTable extends Module{
 				this.subscribe("table-resize", this.tableResized.bind(this));
 				
 			}else{
-				this.binding = function(){
-					if(!table.browserMobile || (table.browserMobile && (!table.modules.edit || (table.modules.edit && !table.modules.edit.currentCell)))){
+				this.binding = () => {
+					if(!this.editActive()){
 						table.columnManager.rerenderColumns(true);
 						table.redraw();
 					}
