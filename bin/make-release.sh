@@ -2,30 +2,30 @@
 
 set -euo pipefail
 
-# Function to list the 5 most recent remote tags by date
-list_recent_remote_tags() {
-  echo "Fetching the 5 most recent remote tags by date:"
+# Tabulator tags are NOT prefixed with "v" (e.g. "6.4.0", "5.0.0-alpha.0").
+# Tag format: MAJOR.MINOR.PATCH with an optional -channel.N pre-release suffix.
+
+# List remote release tags, most recent (by version) first.
+# Strips the dereferenced "^{}" entries that git ls-remote emits for annotated tags.
+list_remote_tags() {
   git ls-remote --tags origin | \
-    grep -E 'refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+\.[0-9]+)?$' | \
-    while read -r hash ref; do
-      tag="${ref#refs/tags/}"
-      date=$(git log -1 --format='%ci' "$hash" 2>/dev/null || echo "unknown date")
-      echo "$tag $date"
-    done | sort -k2 -r | head -n 5
+    sed 's#.*refs/tags/##' | \
+    grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+\.[0-9]+)?$' | \
+    sort -V
+}
+
+# Function to list the 5 most recent remote tags
+list_recent_remote_tags() {
+  echo "5 most recent remote tags:"
+  list_remote_tags | tail -n 5
 }
 
 # Function to get the next version in sequence
 guess_next_version() {
-  # Get the most recent tag
-  local latest_tag
-  latest_tag=$(git ls-remote --tags origin | \
-    grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+\.[0-9]+)?$' | \
-    sort -V | tail -n 1)
+  local latest_version
+  latest_version=$(list_remote_tags | tail -n 1)
 
-  # Strip 'v' from the tag
-  latest_version="${latest_tag#v}"
-
-  if [[ "$latest_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)\.([0-9]+))?$ ]]; then
+  if [[ "$latest_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta|rc)\.([0-9]+))?$ ]]; then
     major="${BASH_REMATCH[1]}"
     minor="${BASH_REMATCH[2]}"
     patch="${BASH_REMATCH[3]}"
@@ -46,12 +46,12 @@ guess_next_version() {
   fi
 }
 
-# Function to validate version format
+# Function to validate version format (accepts an optional leading "v", strips it)
 validate_version() {
   if [[ "$1" =~ ^v?([0-9]+\.[0-9]+\.[0-9]+(-[a-z]+\.[0-9]+)?)$ ]]; then
     echo "${BASH_REMATCH[1]}"
   else
-    echo "Error: Invalid version format. Expected x.x.x or x.x.x-channel.x"
+    echo "Error: Invalid version format. Expected x.x.x or x.x.x-channel.x" >&2
     exit 1
   fi
 }
@@ -67,7 +67,7 @@ VERSION="${INPUT_VERSION:-$default_version}"
 
 # Step 3: Validate and clean the version
 VERSION=$(validate_version "$VERSION")
-NEW_TAG="v$VERSION"
+NEW_TAG="$VERSION"
 
 # Confirm with the user
 echo ""
@@ -98,8 +98,8 @@ else
 fi
 
 # Step 5: Push tag
-if git tag | grep -q "$NEW_TAG\$"; then
-  echo "Tag $NEW_TAG already exists."
+if git ls-remote --tags origin "refs/tags/$NEW_TAG" | grep -q "$NEW_TAG"; then
+  echo "Tag $NEW_TAG already exists on origin."
 else
   echo "Creating and pushing tag $NEW_TAG..."
   git tag "$NEW_TAG"

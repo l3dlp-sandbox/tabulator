@@ -3,7 +3,9 @@ name: Tabulator Build & Publish
 on:
   push:
     tags:
-      - 'v*' # Run on any tag that starts with v (e.g., v1.0.0)
+      # Tabulator tags are not v-prefixed. Match x.y.z and x.y.z-channel.n (e.g. 6.4.1, 5.0.0-alpha.0)
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-*'
 
 permissions:
   id-token: write # Required for OIDC
