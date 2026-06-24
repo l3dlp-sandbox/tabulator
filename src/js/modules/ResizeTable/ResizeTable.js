@@ -47,22 +47,19 @@ export default class ResizeTable extends Module{
 				this.autoResize = true;
 				
 				this.resizeObserver = new ResizeObserver((entry) => {
-					if(!this.editActive()){
+					var nodeHeight = Math.floor(entry[0].contentRect.height);
+					var nodeWidth = Math.floor(entry[0].contentRect.width);
 
-						var nodeHeight = Math.floor(entry[0].contentRect.height);
-						var nodeWidth = Math.floor(entry[0].contentRect.width);
-						
-						if(this.tableHeight != nodeHeight || this.tableWidth != nodeWidth){
-							this.tableHeight = nodeHeight;
-							this.tableWidth = nodeWidth;
-							
-							if(table.element.parentNode){
-								this.containerHeight = table.element.parentNode.clientHeight;
-								this.containerWidth = table.element.parentNode.clientWidth;
-							}
-							
-							this.redrawTable();
+					if(this.tableHeight != nodeHeight || this.tableWidth != nodeWidth){
+						this.tableHeight = nodeHeight;
+						this.tableWidth = nodeWidth;
+
+						if(table.element.parentNode){
+							this.containerHeight = table.element.parentNode.clientHeight;
+							this.containerWidth = table.element.parentNode.clientWidth;
 						}
+
+						this.redrawTable();
 					}
 				});
 				
@@ -73,20 +70,17 @@ export default class ResizeTable extends Module{
 				if(this.table.element.parentNode && !this.table.rowManager.fixedHeight && (tableStyle.getPropertyValue("max-height") || tableStyle.getPropertyValue("min-height"))){
 					
 					this.containerObserver = new ResizeObserver((entry) => {
-						if(!this.editActive()){
+						var nodeHeight = Math.floor(entry[0].contentRect.height);
+						var nodeWidth = Math.floor(entry[0].contentRect.width);
 
-							var nodeHeight = Math.floor(entry[0].contentRect.height);
-							var nodeWidth = Math.floor(entry[0].contentRect.width);
-							
-							if(this.containerHeight != nodeHeight || this.containerWidth != nodeWidth){
-								this.containerHeight = nodeHeight;
-								this.containerWidth = nodeWidth;
-								this.tableHeight = table.element.clientHeight;
-								this.tableWidth = table.element.clientWidth;
-							}
-							
-							this.redrawTable();
+						if(this.containerHeight != nodeHeight || this.containerWidth != nodeWidth){
+							this.containerHeight = nodeHeight;
+							this.containerWidth = nodeWidth;
+							this.tableHeight = table.element.clientHeight;
+							this.tableWidth = table.element.clientWidth;
 						}
+
+						this.redrawTable();
 					});
 					
 					this.containerObserver.observe(this.table.element.parentNode);
@@ -96,10 +90,8 @@ export default class ResizeTable extends Module{
 				
 			}else{
 				this.binding = () => {
-					if(!this.editActive()){
-						table.columnManager.rerenderColumns(true);
-						table.redraw();
-					}
+					table.columnManager.rerenderColumns(true);
+					table.redraw();
 				};
 				
 				window.addEventListener("resize", this.binding);
@@ -127,16 +119,6 @@ export default class ResizeTable extends Module{
 		this.visibilityObserver.observe(this.table.element);
 	}
 	
-	//redrawing the table while a cell is being edited tears down the active
-	//editor. With a percentage based table height the editor itself can grow
-	//the page, which grows the table, which fires the resize observers in a
-	//loop and leaves the editor unusable (see issue #4142). Skip resize driven
-	//redraws while an edit is in progress; the layout is refreshed once editing
-	//ends.
-	editActive(){
-		return !!(this.table.modules.edit && this.table.modules.edit.currentCell);
-	}
-
 	redrawTable(force){
 		if(this.initialized && this.visible){
 			this.table.columnManager.rerenderColumns(true);
