@@ -426,9 +426,8 @@ $rangeHeaderTextHighlightBackground: #000000 !default; //header text color when 
 			}
 		}
 		
-		.tabulator-frozen-rows-holder{	
-			padding-top: 1em;
-			display: inline-block;	
+		.tabulator-frozen-rows-holder{
+			display: inline-block;
 			&:empty{
 				display: none;
 			}
